@@ -1,10 +1,10 @@
 package main
 
 import (
-	// "container/heap"
 	"container/heap"
 	"fmt"
 	"math"
+    "math/rand"
 )
 
 
@@ -73,7 +73,7 @@ func AStar(grid *Grid, start, goal Point) ([]*Node, error) {
 			
 			// TODO: Написать функцию добавления единичного расстояния.
 
-			// Проверяем есть ли сосед в открытом списке
+			// Есть ли сосед в открытом списке
 			existingNode := openList.Contains(neighbor.Position)
 
 			if existingNode == nil {
@@ -102,19 +102,62 @@ func AStar(grid *Grid, start, goal Point) ([]*Node, error) {
 // Обновленная функция main с графической визуализацией
 func main() {
     // Создаем сетку 10x10
-    grid := NewGrid(10, 10)
+    // grid := NewGrid(10, 10)
     
-    // Добавляем препятствия
-    obstacles := [][2]int{
-        {2, 2}, {2, 3}, {2, 4}, {2, 5},
-        {3, 5}, {4, 5}, {5, 5},
-        {7, 1}, {7, 2}, {7, 3}, {7, 4},
+    // // Добавляем препятствия
+    // obstacles := [][2]int{
+    //     {2, 2}, {2, 3}, {2, 4}, {2, 5},
+    //     {3, 5}, {4, 5}, {5, 5},
+    //     {7, 1}, {7, 2}, {7, 3}, {7, 4},
+    // }
+    
+    // for _, obs := range obstacles {
+    //     grid.AddObstacle(Point{obs[0], obs[1]})
+    // }
+    // ================================================== //
+
+     // Создаем большую сетку 100x100
+    grid := NewGrid(55, 55)
+    
+    // Стартовая и целевая точки
+    startX, startY := 0, 0
+    goalX, goalY := 99, 99
+    
+    // 1. Случайные препятствия (20% плотность)
+    for x := 0; x < 100; x++ {
+        for y := 0; y < 100; y++ {
+            if (x != startX || y != startY) && (x != goalX || y != goalY) {
+                if rand.Float64() < 0.2 {
+                    grid.AddObstacle(Point{x, y})
+                }
+            }
+        }
     }
     
-    for _, obs := range obstacles {
-        grid.AddObstacle(Point{obs[0], obs[1]})
+    // 2. Диагональные стены
+    for i := 10; i < 30; i++ {
+        grid.AddObstacle(Point{i, i})
+        grid.AddObstacle(Point{i, 90-i})
     }
     
+    // 3. Вертикальные коридоры
+    for y := 20; y < 80; y++ {
+        grid.AddObstacle(Point{25, y})
+        grid.AddObstacle(Point{50, y})
+        grid.AddObstacle(Point{75, y})
+    }
+    
+    // 4. Горизонтальные барьеры с проходами
+    for x := 10; x < 90; x++ {
+        if x%15 != 0 { // оставляем проходы каждые 15 клеток
+            grid.AddObstacle(Point{x, 30})
+            grid.AddObstacle(Point{x, 60})
+        }
+    }
+
+    // createMaze(grid, 40, 40, 20, 20)
+
+    // ================================================== //
     fmt.Println("Поиск пути с помощью алгоритма A*")
     fmt.Println("==================================")
     
@@ -122,7 +165,7 @@ func main() {
     // startX, startY := 0, 0
     // goalX, goalY := 9, 9
     start := Point{x: 0, y: 0,}
-	goal := Point{x: 9, y: 9}
+	goal := Point{x: 45, y: 30}
     path, err := AStar(grid, start, goal)
     
     if err != nil {
@@ -143,56 +186,24 @@ func main() {
     // Создаем графические визуализации
     fmt.Println("\nСоздание графической визуализации...")
     
-    // Простая версия с тепловой картой
-    err = PlotGrid(grid, path, "astar_heatmap.png")
-    if err != nil {
-        fmt.Printf("Ошибка создания тепловой карты: %v\n", err)
-    } else {
-        fmt.Println("Тепловая карта сохранена как: astar_heatmap.png")
-    }
-    
     // Детальная версия
-    err = PlotGridDetailed(grid, path, "astar_detailed.png")
+    // err = PlotGridDetailed(grid, path, "astar_detailed.png")
+    err = PlotGrid(grid, path, "astar_colored.png")
     if err != nil {
         fmt.Printf("Ошибка создания детального графика: %v\n", err)
     } else {
         fmt.Println("Детальный график сохранен как: astar_detailed.png")
     }
-    
-    // Также сохраняем текстовую версию для сравнения
-    fmt.Println("\nТекстовая версия:")
-    PrintGridText(grid, path)
-}
-
-// Переименованная оригинальная функция для сравнения
-func PrintGridText(grid *Grid, path []*Node) {
-    pathMap := make(map[string]bool)
-    for _, node := range path {
-        key := fmt.Sprintf("%d,%d", node.Position.x, node.Position.y)
-        pathMap[key] = true
-    }
-    
-    fmt.Println("Сетка с найденным путем (текст):")
-    for y := grid.Height - 1; y >= 0; y-- {
-        for x := 0; x < grid.Width; x++ {
-            key := fmt.Sprintf("%d,%d", x, y)
-            
-            if pathMap[key] {
-                if x == path[0].Position.x && y == path[0].Position.y {
-                    fmt.Print("S ") // Старт
-                } else if x == path[len(path)-1].Position.x && y == path[len(path)-1].Position.y {
-                    fmt.Print("G ") // Цель
-                } else {
-                    fmt.Print("* ") // Путь
-                }
-            } else if grid.IsObstacle(Point{x, y}) {
-                fmt.Print("# ") // Препятствие
-            } else {
-                fmt.Print(". ") // Свободная клетка
-            }
-        }
-        fmt.Println()
-    }
 }
 
 
+// func createMaze(grid *Grid, startX, startY, width, height int) {
+//     for x := startX; x < startX+width; x += 3 {
+//         for y := startY; y < startY+height; y += 3 {
+//             // Создаем блоки с проходами
+//             grid.AddObstacle(Point{x, y})
+//             grid.AddObstacle(Point{x+1, y})
+//             grid.AddObstacle(Point{x, y+1})
+//         }
+//     }
+// }

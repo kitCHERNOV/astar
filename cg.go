@@ -1,16 +1,12 @@
 package main
 
 import (
-	// "container/heap"
 	"fmt"
 	"image/color"
-
-	// "math"
 
 	"gonum.org/v1/plot"
 	"gonum.org/v1/plot/palette"
 	"gonum.org/v1/plot/plotter"
-	// "gonum.org/v1/plot/plotter/moreland"
 	"gonum.org/v1/plot/plotutil"
 	"gonum.org/v1/plot/vg"
 )
@@ -77,12 +73,12 @@ func PlotGrid(grid *Grid, path []*Node, filename string) error {
     hm := plotter.NewHeatMap(gridData, nil)
     
     // Настройка цветовой схемы
-    // colors := []color.Color{
-    //     color.RGBA{255, 255, 255, 255}, // Белый для свободных клеток
-    //     color.RGBA{128, 128, 128, 255}, // Серый для пути
-    //     color.RGBA{0, 0, 0, 255},       // Черный для препятствий
-    // }
-	hm.Palette = palette.Heat(256, 1.0)
+    colors := []color.Color{
+        color.RGBA{255, 255, 255, 255}, // Белый для свободных клеток
+        color.RGBA{128, 128, 128, 255}, // Серый для пути
+        color.RGBA{0, 0, 0, 255},       // Черный для препятствий
+    }
+    hm.Palette = palette.Heat(len(colors), 1.0)
     
     p.Add(hm)
     
